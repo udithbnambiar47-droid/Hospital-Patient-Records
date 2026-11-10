@@ -9,8 +9,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+BASE_DIR = Path(__file__).parent
 
-DATA_DIR = Path(__file__).parent / "data"
+
+def find_csv(name: str) -> Path:
+    """Find <name>.csv in data/ or the repo root, ignoring letter case."""
+    for folder in (BASE_DIR / "data", BASE_DIR / "Data", BASE_DIR):
+        if folder.is_dir():
+            for p in folder.glob("*.csv"):
+                if p.name.lower() == f"{name}.csv":
+                    return p
+    raise FileNotFoundError(
+        f"{name}.csv not found. Put the four CSVs in a 'data' folder next to app.py."
+    )
 
 st.set_page_config(
     page_title="MGH Patient Analytics",
@@ -25,10 +36,10 @@ st.set_page_config(
 
 @st.cache_data(show_spinner="Loading data...")
 def load_data():
-    enc = pd.read_csv(DATA_DIR / "encounters.csv", encoding="utf-8-sig")
-    proc = pd.read_csv(DATA_DIR / "procedures.csv", encoding="utf-8-sig")
-    pat = pd.read_csv(DATA_DIR / "patients.csv", encoding="utf-8-sig")
-    org = pd.read_csv(DATA_DIR / "organizations.csv", encoding="utf-8-sig")
+    enc = pd.read_csv(find_csv("encounters"), encoding="utf-8-sig")
+    proc = pd.read_csv(find_csv("procedures"), encoding="utf-8-sig")
+    pat = pd.read_csv(find_csv("patients"), encoding="utf-8-sig")
+    org = pd.read_csv(find_csv("organizations"), encoding="utf-8-sig")
 
     for df in (enc, proc):
         for col in ("START", "STOP"):
@@ -341,5 +352,5 @@ insurance coverage, and medical encounters and procedures. The records are gener
     frames = {"encounters": enc_all.drop(columns=["MONTH", "PAYER_SHORT"]), "procedures": proc_all,
               "patients": patients, "organizations": orgs}
     st.dataframe(frames[choice].head(200), width="stretch")
-    raw = (DATA_DIR / f"{choice}.csv").read_bytes()
+        raw = find_csv(choice).read_bytes()
     st.download_button(f"Download {choice}.csv", raw, file_name=f"{choice}.csv", mime="text/csv")
