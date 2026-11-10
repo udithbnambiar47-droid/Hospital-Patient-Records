@@ -352,5 +352,5 @@ insurance coverage, and medical encounters and procedures. The records are gener
     frames = {"encounters": enc_all.drop(columns=["MONTH", "PAYER_SHORT"]), "procedures": proc_all,
               "patients": patients, "organizations": orgs}
     st.dataframe(frames[choice].head(200), width="stretch")
-        raw = find_csv(choice).read_bytes()
+    raw = find_csv(choice).read_bytes()
     st.download_button(f"Download {choice}.csv", raw, file_name=f"{choice}.csv", mime="text/csv")
